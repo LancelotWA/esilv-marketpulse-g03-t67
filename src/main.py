@@ -25,15 +25,16 @@ def load_prices():
 def filter_prices(prices, ticker):
     return [row for row in prices if row["ticker"] == ticker]
 
+
 def get_first_close(prices):
-    row = prices[0]["close"]
-    return float(row) 
+    return float(prices[0]["close"])
+
 
 def get_last_close(prices):
-    row = prices[-1]["close"]
-    return float(row)
+    return float(prices[-1]["close"])
 
-def display_market_summary(asset, prices, show_currency=True) : 
+
+def display_market_summary(asset, prices, show_currency=True):
     currency = f" {asset['currency']}" if show_currency else ""
 
     print(f"{asset['ticker']} - {asset['name']}")
