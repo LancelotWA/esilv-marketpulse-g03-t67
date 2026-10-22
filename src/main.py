@@ -1,6 +1,17 @@
 from pathlib import Path
 import csv
 import json
+import sys
+
+# Make the project root importable so "python src/main.py" can resolve "src.analytics".
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from src.analytics import (
+    align_series,
+    calculate_period_return,
+    calculate_base_100,
+    calculate_relative_performance,
+)
 
 
 DATA_DIR = Path("data/sample")
@@ -64,6 +75,27 @@ def display_market_summary(asset, prices, show_currency=True):
     print(f"Last close   : {get_last_close(prices):.2f}{currency}")
 
 
+def display_comparison(instrument, benchmark, instrument_prices, benchmark_prices):
+    aligned_instrument, aligned_benchmark = align_series(instrument_prices, benchmark_prices)
+
+    instrument_return = calculate_period_return(aligned_instrument)
+    benchmark_return = calculate_period_return(aligned_benchmark)
+    relative_performance = calculate_relative_performance(instrument_return, benchmark_return)
+
+    instrument_base_100 = calculate_base_100(aligned_instrument)
+    benchmark_base_100 = calculate_base_100(aligned_benchmark)
+
+    print("Comparison ")
+    print(f"Aligned sessions     : {len(aligned_instrument)}")
+    print(f"Instrument return    : {instrument_return:+.2f}%")
+    print(f"Benchmark return     : {benchmark_return:+.2f}%")
+    print(f"Relative performance : {relative_performance:+.2f} percentage points")
+    print()
+    print("Base 100")
+    print(f"{instrument['ticker']} : 100.00 -> {instrument_base_100[-1]['value']:.2f}")
+    print(f"{benchmark['ticker']} : 100.00 -> {benchmark_base_100[-1]['value']:.2f}")
+
+
 def main():
     instruments = load_instruments()
     prices = load_prices()
@@ -86,6 +118,8 @@ def main():
     print()
     print("Benchmark")
     display_market_summary(benchmark, benchmark_prices, show_currency=False)
+    print()
+    display_comparison(instrument, benchmark, instrument_prices, benchmark_prices)
 
 
 if __name__ == "__main__":
