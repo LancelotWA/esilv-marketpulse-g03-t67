@@ -11,7 +11,17 @@ def align_series(instrument_prices, benchmark_prices):
 
 
 def calculate_period_return(prices):
-    raise NotImplementedError  # Owner: see team table
+    """Return the total return over the period in %"""
+    if not prices:
+        raise ValueError("cannot compute a return on an empty series")
+
+    first_close = float(prices[0]["close"])
+    last_close = float(prices[-1]["close"])
+
+    if first_close == 0:
+        raise ValueError("first close is zero, return is undefined")
+
+    return ((last_close / first_close) - 1.0) * 100.0
 
 
 def calculate_base_100(prices):
