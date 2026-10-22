@@ -32,7 +32,18 @@ def calculate_period_return(prices):
 
 
 def calculate_base_100(prices):
-    raise NotImplementedError  # Owner: see team table
+    """Return the series normalized so that the first point equals 100"""
+    first_close = float(prices[0]["close"])
+
+    if first_close == 0:
+        raise ValueError("first close is zero, base 100 is undefined")
+
+    base_100 = []
+    for row in prices:
+        value = (float(row["close"]) / first_close) * 100.0
+        base_100.append({"date": row["date"], "ticker": row["ticker"], "value": value})
+
+    return base_100
 
 
 def calculate_relative_performance(instrument_return, benchmark_return):
