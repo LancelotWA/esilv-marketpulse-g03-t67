@@ -12,6 +12,7 @@ from src.analytics import (
     calculate_base_100,
     calculate_relative_performance,
 )
+from src.providers.yahoo_provider import fetch_yahoo_prices
 
 
 DATA_DIR = Path("data/sample")
@@ -19,9 +20,15 @@ DATA_DIR = Path("data/sample")
 # These starter values mirror config/settings.yml.
 # settings.yml is a human-readable configuration contract in the CORE.
 # Parsing YAML is optional and is not required by the 18-hour lab sequence.
+PROVIDER = "yahoo"  # "yahoo" or "csv"
+LOOKBACK = "1mo"
+INTERVAL = "1d"
 LOOKBACK_LABEL = "1 month"
 INTERVAL_LABEL = "Daily"
-PROVIDER_LABEL = "CSV (local sample)"
+PROVIDER_LABELS = {
+    "csv": "CSV (local sample)",
+    "yahoo": "Yahoo Finance (live)",
+}
 
 
 def load_instruments():
@@ -36,6 +43,19 @@ def load_prices():
 
 def filter_prices(prices, ticker):
     return [row for row in prices if row["ticker"] == ticker]
+
+
+def load_market_series(provider, instrument, benchmark):
+    if provider == "yahoo":
+        instrument_prices = fetch_yahoo_prices(instrument["ticker"], LOOKBACK, INTERVAL)
+        benchmark_prices = fetch_yahoo_prices(benchmark["ticker"], LOOKBACK, INTERVAL)
+        return instrument_prices, benchmark_prices
+
+    if provider == "csv":
+        prices = load_prices()
+        return filter_prices(prices, instrument["ticker"]), filter_prices(prices, benchmark["ticker"])
+
+    raise ValueError(f"unknown provider {provider}")
 
 
 def get_first_close(prices):
@@ -98,20 +118,18 @@ def display_comparison(instrument, benchmark, instrument_prices, benchmark_price
 
 def main():
     instruments = load_instruments()
-    prices = load_prices()
 
     instrument = instruments["instrument"]
     benchmark = instruments["benchmark"]
 
-    instrument_prices = filter_prices(prices, instrument["ticker"])
-    benchmark_prices = filter_prices(prices, benchmark["ticker"])
+    instrument_prices, benchmark_prices = load_market_series(PROVIDER, instrument, benchmark)
 
     print("=== MarketPulse ===")
     print()
     print("Market configuration")
     print(f"Period   : {LOOKBACK_LABEL}")
     print(f"Interval : {INTERVAL_LABEL}")
-    print(f"Provider : {PROVIDER_LABEL}")
+    print(f"Provider : {PROVIDER_LABELS[PROVIDER]}")
     print()
     print("Instrument")
     display_market_summary(instrument, instrument_prices)
