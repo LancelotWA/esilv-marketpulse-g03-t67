@@ -12,7 +12,7 @@ from src.analytics import (
     calculate_base_100,
     calculate_relative_performance,
 )
-from src.providers.yahoo_provider import fetch_yahoo_prices
+from src.providers.yahoo_provider import YahooProviderError, fetch_yahoo_prices
 
 
 DATA_DIR = Path("data/sample")
@@ -56,6 +56,17 @@ def load_market_series(provider, instrument, benchmark):
         return filter_prices(prices, instrument["ticker"]), filter_prices(prices, benchmark["ticker"])
 
     raise ValueError(f"unknown provider {provider}")
+
+
+def load_market_data(instrument, benchmark):
+    """Return the provider actually used and both series, falling back to CSV when Yahoo fails"""
+    try:
+        return (PROVIDER, *load_market_series(PROVIDER, instrument, benchmark))
+    except YahooProviderError as error:
+        print(f"Notice: Yahoo Finance unavailable ({error}).")
+        print("Notice: falling back to the CSV provider (local sample data).")
+        print()
+        return ("csv", *load_market_series("csv", instrument, benchmark))
 
 
 def get_first_close(prices):
@@ -122,14 +133,14 @@ def main():
     instrument = instruments["instrument"]
     benchmark = instruments["benchmark"]
 
-    instrument_prices, benchmark_prices = load_market_series(PROVIDER, instrument, benchmark)
+    provider, instrument_prices, benchmark_prices = load_market_data(instrument, benchmark)
 
     print("=== MarketPulse ===")
     print()
     print("Market configuration")
     print(f"Period   : {LOOKBACK_LABEL}")
     print(f"Interval : {INTERVAL_LABEL}")
-    print(f"Provider : {PROVIDER_LABELS[PROVIDER]}")
+    print(f"Provider : {PROVIDER_LABELS[provider]}")
     print()
     print("Instrument")
     display_market_summary(instrument, instrument_prices)
