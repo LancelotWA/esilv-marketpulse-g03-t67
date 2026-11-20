@@ -6,7 +6,7 @@ app:
   name: MarketPulse
 
 market:
-  provider: csv
+  provider: yahoo
   lookback: 1mo
   interval: 1d
 
